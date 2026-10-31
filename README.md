@@ -26,7 +26,7 @@ The original data can be downloaded using `R/01_data_preprocessing.R`.
 ## Repository Structure
 
 ```text
-tcga-paad-grade-prediction/
+TCGA-PAAD-analysis/
 ├── R/
 │   ├── 01_data_preprocessing.R
 │   ├── 02_summary_table.R
@@ -35,9 +35,11 @@ tcga-paad-grade-prediction/
 │   └── 05_render_report.R
 ├── data/
 │   └── paad_analysis_data.rds
-├── data_raw/
-├── output/
+├── data_raw/                  # Generated locally
+├── output/                    # Generated locally
 ├── final_report.Rmd
+├── final_report.html
+├── config.yml
 ├── Makefile
 ├── README.md
 └── .gitignore
@@ -52,6 +54,7 @@ tcga-paad-grade-prediction/
 | `R/03_pca_figure.R` | Generates Figure 1: PCA visualization of gene expression profiles |
 | `R/04_prediction_models.R` | Trains and evaluates Logistic Regression, Elastic Net, and Random Forest models; generates Table 2 |
 | `R/05_render_report.R` | Renders the final HTML report |
+| `config.yml` | Stores report metadata, including title and author  |
 | `data/paad_analysis_data.rds` | Processed dataset used for analysis |
 | `final_report.Rmd` | Generate final report |
 | `Makefile` | Defines dependencies and commands for reproducing the analysis |
@@ -98,6 +101,9 @@ To rebuild the report after cleaning:
 ```bash
 make
 ```
+
+## Report configuration
+The report title and author are defined in config.yml. The script R/05_render_report.R reads these settings and passes them to the R Markdown rendering process. To update the report metadata, modify config.yml and run make again.
 
 ## Required Table and Figure
 

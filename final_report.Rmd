@@ -1,0 +1,123 @@
+---
+title: "TCGA PAAD analysis report"
+author: "Kyurhi Kim"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+  toc: true
+  toc_depth: 2
+  number_sections: true
+  theme: readable
+  highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE,
+                      fig.align = "center")
+
+library(here)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(dplyr)
+```
+
+# Introduction 
+Pancreatic ductal adenocarcinoma (PDAC), which is the most common type of pancreatic cancer, is an exceptionally aggressive malignancy with poor overall survival.Histologic tumor grade provides an prognostic informatino in addition to that provided by stage of disease. low-grade tumors (G1 well-differentiated and G2 moderately differentiated) typically demonstrate slower progression, whereas high-grade tumors (G3 poorly differentiated and G4 undifferentiated) correlate with rapid recurrence and therapeutic resistance. The overarching goal of this project is to develop a reproducible workflow to evaluate whether transcriptomic profiles can accurately predict **Low-Grade (G1/G2)** from **High-Grade (G3/G4)** pancreatic tumors. 
+
+The dataset is obtained from the publicly accessible **Cancer Genome Atlas Pancreatic Adenocarcinoma (TCGA-PAAD)** cohort from the **UCSC Xena repository**. The dataset contains approximately 180 pancreatic cancer samples with:
+
+1. **Gene Expression Profiles:** High-throughput RNA-sequencing data quantified as RSEM normalized counts and presented as $\log_2(\text{norm\_count} + 1)$.
+2. **Clinical Information:** Patient demographics and tumor pathological features, including histologic tumor grade.
+
+In this report, we filter primary solid tumor specimens, categorize tumors into binary histologic grade groups (Low vs High Grade), present a summary of baseline cohort demographics, and perform Principal Component Analysis (PCA) to evaluate unsupervised transcriptomic variation across histologic grades. Finally, we will conduct prediction of tumor grade from gene expression profiles by classifying tumors as low grade (G1/G2) or high grade (G3/G4) (e.g., logistic regression, Elastic Net, and random forest).
+
+# Data Preprocessing Result
+```{r}
+analysis_data <- readRDS(
+  here::here("data", "paad_analysis_data.rds")
+)
+
+clin_data <- analysis_data$clinical
+expr_data <- analysis_data$expression
+
+cat("Number of samples:", nrow(clin_data), "\n")
+cat("Number of genes:", nrow(expr_data), "\n")
+
+table(clin_data$grade_group)
+```
+Clean dataset comprises **`r nrow(clin_data)`** samples with matched expression profiles covering **`r format(nrow(expr_data), big.mark = ",")`** genes.
+
+# Baseline characteristics of patients by histologic grade
+```{r, table 1}
+summary_table <- readRDS(
+  here::here("output", "summary_table.rds")
+)
+
+kable(
+  summary_table,
+  caption = "Table 1. Demographic and Clinical Characteristics Stratified by Pancreatic Cancer Histologic Grade",
+  align = c("l", "c", "c"),
+  col.names = c("Clinical Characteristic", "Low Grade (G1/G2)", "High Grade (G3/G4)")
+) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, background = "#f8f9fa") %>%
+  column_spec(1, bold = TRUE)
+```
+
+## Description of Table 1
+**Table 1** describes the baseline demographic and clinical features of the analytical cohort partitioned by tumor histological grade. Low-Grade (G1/G2) cases constitute the majority of patients, while High-Grade (G3/G4) tumors account for approximately one-third of the cohort. Both cohorts display comparable mean ages at diagnosis (mid-60s) and balanced sex distributions. 
+Interestingly, both low- and high-grade tumors appear predominantly within Intermediate (II) pathologic stage, suggesting that histologic grade captures biological differentiation independent of anatomic tumor extent. 
+
+# PCA figure
+```{r, Figure 1, fig.width=8, fig.height=6}
+pca_plot <- readRDS(
+  here::here("output", "pca_plot.rds")
+)
+
+print(pca_plot)
+
+pca_results <- readRDS(
+  here::here("output", "pca_results.rds")
+)
+
+var_exp <- pca_results$variance_explained
+```
+
+## Description of Figure 1
+To examine whether transcriptomic variance clusters pancreatic tumors by histologic differentiation, we performed unsupervised Principal Component Analysis (PCA) on the scaled gene expression profiles.
+
+**Figure 1** illustrates the unsupervised two-dimensional projection of PAAD samples using the first two principal components (PC1 and PC2). PC1 and PC2 explain `r sprintf("%.1f", var_exp[1])`% and
+`r sprintf("%.1f", var_exp[2])`% of the transcriptomic variance, respectively. Each patients are color-coded according to histologic differentiation status (blue for G1/G2; red for G3/G4). 
+
+The visualization shows substantial overlap between Low-Grade(G1/G2) and High-Grade(G3/G4) tumors across the transcriptomic landscape, indicating that histologic differentiation in pancreatic cancer does not correspond to a single, dominant genome-wide expression shift. In addition, a subset of Low-Grade tumors segregates toward the far positive tail of PC1, consistent with documented transcriptomic heterogeneity in bulk TCGA pancreatic tissue. 
+
+# Supervised machine learning for grade classification 
+We partition the data into training (75%) and test (25%) sets and evaluate three models:
+1. **Logistic Regression:** Standard logistic regression using the top 10 principal components.
+2. **Elastic Net:** Simultaneous $L_1$ and $L_2$ penalized regression across all 500 features with 5-fold cross-validated hyperparameter tuning.
+3. **Random Forest:** Ensemble of decision trees capturing non-linear feature interactions and feature importance rankings.
+```{r, ml model}
+model_results <- readRDS(
+  here::here("output", "model_results.rds")
+)
+model_comp_table <- model_results$comparison_table
+
+# Test sample size
+n_test <- length(model_results$test_grade)
+
+kable(
+  model_comp_table,
+  caption = "Table 2. Out-of-Sample Performance Comparison on Independent Test Cohort",
+  align = c("l", "c", "c", "c", "c")
+) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) %>%
+  row_spec(0, bold = TRUE, background = "#f8f9fa") %>%
+  column_spec(1, bold = TRUE)
+
+```
+
+## ML model performance comparison
+**Table 2** summarizes the classification performance of three supervised learning models evaluated on the independent test set (N = `r n_test`). Given the imbalance between low-grade and high-grade tumors, we evaluated performance using ROC-AUC, accuracy, sensitivity for high-grade tumor detection, and specificity.

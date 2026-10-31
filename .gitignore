@@ -1,0 +1,19 @@
+# R / RStudio
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# macOS
+.DS_Store
+
+# Raw downloaded data
+data_raw/
+
+# Generated analysis outputs
+output/
+
+# Temporary files
+*.Rproj.user
+*.log
+*.tmp

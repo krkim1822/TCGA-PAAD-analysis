@@ -12,6 +12,7 @@ data_raw/
 
 # Generated analysis outputs
 output/
+*.html
 
 # Temporary files
 *.Rproj.user

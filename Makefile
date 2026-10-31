@@ -1,4 +1,4 @@
-final_report.html: final_report.Rmd R/05_render_report.R output/summary_table.rds output/pca_plot.rds output/model_results.rds
+final_report.html: final_report.Rmd config.yml R/05_render_report.R output/summary_table.rds output/pca_plot.rds output/model_results.rds
 	Rscript R/05_render_report.R
 
 output/summary_table.rds: R/02_summary_table.R data/paad_analysis_data.rds

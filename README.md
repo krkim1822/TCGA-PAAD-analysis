@@ -123,3 +123,8 @@ The report title and author are defined in config.yml. The script R/05_render_re
 - Output: `output/model_comp_table.rds`
 
 All tables and figures are incorporated into `final_report.Rmd`.
+
+## Package Management 
+To synchronize the package repository, clone the repository and open the project directory. Then start R in the project directory (renv will bootstrap automatically via `.Rprofile`) or run `make install` from the terminal. 
+
+This runs `renv::restore()` and installs the exact package versions in `renv.lock`.

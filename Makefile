@@ -13,6 +13,10 @@ output/model_results.rds: R/04_prediction_models.R data/paad_analysis_data.rds
 data/paad_analysis_data.rds: R/01_data_preprocessing.R
 	Rscript R/01_data_preprocessing.R
 
+.PHONY: install
+install:
+	Rscript -e "renv::restore(prompt = FALSE)"
+
 .PHONY: clean
 clean:
 	rm -f output/*.rds output/*.png final_report.html

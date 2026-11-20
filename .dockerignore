@@ -1,0 +1,9 @@
+.git
+.Rhistory
+.Rproj.user
+renv/library
+output/
+data_raw/
+report/
+*.html
+.DS_Store

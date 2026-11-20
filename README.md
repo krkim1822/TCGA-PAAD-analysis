@@ -27,6 +27,14 @@ The original data can be downloaded using `R/01_data_preprocessing.R`.
 
 ```text
 TCGA-PAAD-analysis/
+├── Dockerfile
+├── .dockerignore
+├── Makefile
+├── README.md
+├── .gitignore
+├── .Rprofile
+├── renv.lock
+├── renv/
 ├── R/
 │   ├── 01_data_preprocessing.R
 │   ├── 02_summary_table.R
@@ -35,14 +43,11 @@ TCGA-PAAD-analysis/
 │   └── 05_render_report.R
 ├── data/
 │   └── paad_analysis_data.rds
-├── data_raw/                  # Generated locally
-├── output/                    # Generated locally
+├── data_raw/
+├── output/
+├── report/
 ├── final_report.Rmd
-├── final_report.html
-├── config.yml
-├── Makefile
-├── README.md
-└── .gitignore
+└── config.yml
 ```
 
 ### Description of Files
@@ -67,41 +72,6 @@ TCGA-PAAD-analysis/
 4. **Predictive Modeling:** Split samples into training (75%) and test (25%) sets, fit three classification models, and evaluate their out-of-sample performance.
 5. **Report Generation:** Combine analytical results into a reproducible HTML report.
 
-## Reproducing the Analysis
-
-### 1. Requirements
-The analysis requires R and the following R packages:
-
-```r
-install.packages(c(
-  "here", "data.table", "dplyr", "tidyr",
-  "ggplot2", "knitr", "kableExtra",
-  "rmarkdown", "caret", "pROC",
-  "glmnet", "randomForest"
-))
-```
-
-### 2. Generate the Final Report
-
-Clone the repository and navigate to the project directory. Then run the following command.
-```bash
-make
-```
-
-The Makefile runs the necessary analysis scripts and generates **`final_report.html`** in the project root directory.
-
-To remove generated analysis outputs and the HTML report, run:
-
-```bash
-make clean
-```
-
-To rebuild the report after cleaning:
-
-```bash
-make
-```
-
 ## Report configuration
 The report title and author are defined in config.yml. The script R/05_render_report.R reads these settings and passes them to the R Markdown rendering process. To update the report metadata, modify config.yml and run make again.
 
@@ -124,7 +94,54 @@ The report title and author are defined in config.yml. The script R/05_render_re
 
 All tables and figures are incorporated into `final_report.Rmd`.
 
-## Package Management 
-To synchronize the package repository, clone the repository and open the project directory. Then start R in the project directory (renv will bootstrap automatically via `.Rprofile`) or run `make install` from the terminal. 
+## Reproducing the Analysis
+There are two ways to reproduce the analysis. 
 
-This runs `renv::restore()` and installs the exact package versions in `renv.lock`.
+### Option 1. Run locally using R
+The analysis requires R and the required packages must be installed. 
+Clone the repository and navigate to the project directory. Restore the project dependencies using renv:
+
+```bash
+make install
+```
+
+Generate the Final Report:
+```bash
+make install
+```
+
+The Makefile runs the necessary analysis scripts and generates **`final_report.html`** in the project root directory.
+
+To remove generated analysis outputs and the HTML report, run:
+```bash
+make clean
+```
+
+To rebuild the report after cleaning:
+```bash
+make
+```
+### Option 2: Run using Docker
+Make sure Docker is installed and running.
+Clone the repository:
+```bash
+git clone https://github.com/krkim1822/TCGA-PAAD-analysis.git
+cd TCGA-PAAD-analysis
+```
+
+Generate the report:
+```bash
+make report
+```
+
+The Docker image is publicly available on DockerHub:
+[krkim1822/tcga-paad-analysis](https://hub.docker.com/r/krkim1822/tcga-paad-analysis)
+
+The Makefile automatically pulls the public Docker image from DockerHub, runs the analysis inside a container, and mounts the local `report/` directory.
+
+The completed HTML report will be available at
+`report/final_report.html`.
+
+
+### Windows Users
+For Windows users running Git Bash, Docker volume mounting may require an additional leading slash in the host path.
